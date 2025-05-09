@@ -307,6 +307,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	@Override
 	public int loadBeanDefinitions(Resource resource) throws BeanDefinitionStoreException {
+		// EncodedResource 指定配置文件加载的编码方式
 		return loadBeanDefinitions(new EncodedResource(resource));
 	}
 
@@ -332,7 +333,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 		}
 
 		// 上述为对String路径的映射。
-		// #从 currentResources 中 获取已经封装的Resource对象 并从Resource中获取流
+		// 从 currentResources 中 获取已经封装的Resource对象 并从Resource中获取流
 		try (InputStream inputStream = encodedResource.getResource().getInputStream()) {
 			InputSource inputSource = new InputSource(inputStream);
 			if (encodedResource.getEncoding() != null) {
