@@ -106,24 +106,31 @@ class ApplicationContextAwareProcessor implements BeanPostProcessor {
 	}
 
 	private void invokeAwareInterfaces(Object bean) {
+		// EnvironmentAware 扩展 bean 能够在运行时获取当前 bean 的环境信息
 		if (bean instanceof EnvironmentAware) {
 			((EnvironmentAware) bean).setEnvironment(this.applicationContext.getEnvironment());
 		}
+		// EmbeddedValueResolverAware 扩展 bean 能够在运行时获取 EmbeddedValueResolver 对象，从而解析定义在 bean 中的表达式信息
 		if (bean instanceof EmbeddedValueResolverAware) {
 			((EmbeddedValueResolverAware) bean).setEmbeddedValueResolver(this.embeddedValueResolver);
 		}
+		// ResourceLoaderAware 扩展 bean 能够在运行时获取当前bean的 ResourceLoader 信息
 		if (bean instanceof ResourceLoaderAware) {
 			((ResourceLoaderAware) bean).setResourceLoader(this.applicationContext);
 		}
+		// ApplicationEventPublisherAware 扩展 bean 能够在运行时获取 ApplicationEventPublisher 对象，发布自定义事件
 		if (bean instanceof ApplicationEventPublisherAware) {
 			((ApplicationEventPublisherAware) bean).setApplicationEventPublisher(this.applicationContext);
 		}
+		// MessageSourceAware 扩展 bean 能够获取到 MessageSource 对象，用去进行国际化操作，例如获取国际化信息等
 		if (bean instanceof MessageSourceAware) {
 			((MessageSourceAware) bean).setMessageSource(this.applicationContext);
 		}
+		// ApplicationStartupAware 提供一种机制用来收集和分析 Spring 应用启动期间的详细性能数据
 		if (bean instanceof ApplicationStartupAware) {
 			((ApplicationStartupAware) bean).setApplicationStartup(this.applicationContext.getApplicationStartup());
 		}
+		// ApplicationContextAware  扩展 bean 能够在运行时 获取或交互 spring 容器
 		if (bean instanceof ApplicationContextAware) {
 			((ApplicationContextAware) bean).setApplicationContext(this.applicationContext);
 		}

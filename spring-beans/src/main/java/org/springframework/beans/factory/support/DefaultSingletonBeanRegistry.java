@@ -118,12 +118,17 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
 		Assert.notNull(beanName, "Bean name must not be null");
 		Assert.notNull(singletonObject, "Singleton object must not be null");
+		// 使用singletonObjects作为锁，保证线程安全
 		synchronized (this.singletonObjects) {
+			// 获取beanName在singletonObjects中的单例对象
 			Object oldObject = this.singletonObjects.get(beanName);
+			// 如果成功获取，则代表 在bean名'beanName'下，已经有对象[oldObject]
 			if (oldObject != null) {
+				// 抛出异常
 				throw new IllegalStateException("Could not register object [" + singletonObject +
 						"] under bean name '" + beanName + "': there is already object [" + oldObject + "] bound");
 			}
+			// 核心处理：将beanName和singletonObject的映射关系添加到该工厂的单例缓存中
 			addSingleton(beanName, singletonObject);
 		}
 	}
@@ -136,9 +141,13 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	protected void addSingleton(String beanName, Object singletonObject) {
 		synchronized (this.singletonObjects) {
+			// 将映射关系添加到单例对象的缓存中
 			this.singletonObjects.put(beanName, singletonObject);
+			// 移除beanName在单例工厂缓存中的数据
 			this.singletonFactories.remove(beanName);
+			// 移除beanName在早期单例对象的高速缓存的数据
 			this.earlySingletonObjects.remove(beanName);
+			// 将beanName添加到已注册的单例集中
 			this.registeredSingletons.add(beanName);
 		}
 	}

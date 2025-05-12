@@ -569,8 +569,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			// 加载xml配置文件的属性值到当前工厂中，最重要的解析成BeanDefinition
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
-			// beanFactory的准备工作，对各种属性进行填充
 			// beanDefinition 注册
+			// 以及对 beanFactory 进行一些设置工作，例如 classloader、propertyResolver等
 			prepareBeanFactory(beanFactory);
 
 			try {
@@ -704,18 +704,19 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.setBeanClassLoader(getClassLoader());
 		if (!shouldIgnoreSpel) {
 			// 设置beanfactory的表达式语言处理器
-			// SpelExpressionParser
+			// StandardBeanExpressionResolver 是 BeanExpressionResolver 接口的唯一子类
+			// SpelExpressionParser 用于解析 Spring 中的 Spel 表达式
 			beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
 		}
-		// 为beanFactory增加一个默认的 propertyEditor，这个主要是对bean的属性等设置管理的一个工具类
-		// todo BeanFactory也暴露了registerCustomEditors方法用以添加自定义的转换器
+		// ResourceEditorRegistrar 继承 PropertyEditorRegistrar 接口，用于将 xml配置中设定的属性值进行类型的转换
+		// beanFactory.registerCustomEditor(); BeanFactory也暴露了此方法用以添加自定义的转换器
 		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
 		// Configure the bean factory with context callbacks.
-		// 添加beanPostProcessor,ApplicationContextAwareProcessor此类用来完成某些Aware对象的注入
-		// 此接口涉及一系列扩展，包括环境、上下本等
+		// 添加beanPostProcessor,ApplicationContextAwareProcessor 此类用来完成某些Aware对象的注入
+		// ApplicationContextAwareProcessor 此接口涉及一系列Aware接口，用于扩展包括环境、上下文等共7个
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
-		// 设置要忽略自动装配的接口，很多同学理解不了为什么此处要对这些接口进行忽略，原因非常简单，这些接口的实现是由容器通过set方法进行注入的，
+		// 设置要忽略自动装配的接口，这些接口的实现是由容器通过set方法进行注入的，
 		// 所以在使用autowire进行注入的时候需要将这些接口进行忽略
 		beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
 		beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
@@ -727,9 +728,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// BeanFactory interface not registered as resolvable type in a plain factory.
 		// MessageSource registered (and found for autowiring) as a bean.
-		// 设置几个自动装配的特殊规则,当在进行ioc初始化的如果有多个实现，那么就使用指定的对象进行注入
-		// 有些对象并不在BeanFactory中，但是我们依然想让它们可以被装配，这就需要伪装一下
-		// 保存在一个Map<Class<?>, Object>里
+		// 注册几个自动装配的特殊规则,当在进行ioc初始化的如果有多个实现，那么就使用指定的对象进行注入
 		beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
 		beanFactory.registerResolvableDependency(ResourceLoader.class, this);
 		beanFactory.registerResolvableDependency(ApplicationEventPublisher.class, this);
@@ -743,9 +742,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Detect a LoadTimeWeaver and prepare for weaving, if found.
 		// 增加对AspectJ的支持，在java中织入分为三种方式，分为编译器织入，类加载器织入，运行期织入，
 		// 编译器织入是指在java编译器，采用特殊的编译器，将切面织入到java类中，
-		// 而类加载期织入则指通过特殊的类加载器，在类字节码加载到JVM时，织入切面，运行期织入则是采用cglib和jdk进行切面的织入
-		// aspectj提供了两种织入方式，第一种是通过特殊编译器，在编译器，将aspectj语言编写的切面类织入到java类中，
-		// 第二种是类加载期织入，就是下面的load time weaving，此处后续讲
+		// 类加载器织入则指通过特殊的类加载器，在类字节码加载到JVM时，织入切面，运行期织入则是采用cglib和jdk进行切面的织入
+		// aspectj提供了两种织入方式，第一种是通过特殊编译器，在编译器，将aspectj语言编写的切面类织入到java类中，也就是编译器织入
+		// 第二种是类加载期织入，就是下面的 loadTimeWeaver AOP时详述
 		if (!NativeDetector.inNativeImage() && beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
 			beanFactory.addBeanPostProcessor(new LoadTimeWeaverAwareProcessor(beanFactory));
 			// Set a temporary ClassLoader for type matching.
