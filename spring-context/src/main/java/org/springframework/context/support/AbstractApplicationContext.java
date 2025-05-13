@@ -574,17 +574,21 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			prepareBeanFactory(beanFactory);
 
 			try {
-				// 子类覆盖方法做额外的处理，此处我们自己一般不做任何扩展工作，但是可以查看web中的代码，是有具体实现的
+				// 子类覆盖方法做额外的处理
+				// 此方法定义于 BeanFactoryPostProcessor 接口，该接口用于在BeanFactory加载Bean定义之后、实例化Bean之前对BeanFactory进行自定义修改和扩展
 				postProcessBeanFactory(beanFactory);
 
 				StartupStep beanPostProcess = this.applicationStartup.start("spring.context.beans.post-process");
-				// 调用各种beanFactory处理器bfpp
+				// 调用各种beanFactory处理器即bfpp
+				// bfpp BeanFactoryPostProcessor	bpp BeanPostProcessor 	 两者都属于后置处理器
+				// bfpp 用于 BeanDefinition，即一个 Bean 的配置信息已经被加载但是还没有实例化，此时会通过bfpp进行一些处理
+				// bpp 用于 Bean,即一个 Bean 已经实例化，此时会通过bff进行一些处理
 				invokeBeanFactoryPostProcessors(beanFactory);
 				// 注册bean处理器，这里只是注册功能，真正调用的是getBean方法
 				registerBeanPostProcessors(beanFactory);
 				beanPostProcess.end();
 
-				// 为上下文初始化message源，即不同语言的消息体，国际化处理,在springmvc的时候通过国际化的代码重点讲
+				// 为上下文初始化message源，即不同语言的消息体，国际化处理
 				initMessageSource();
 
 				// 初始化事件监听多路广播器
@@ -789,12 +793,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * <p>Must be called before singleton instantiation.
 	 */
 	protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
+		// 核心处理
 		// 获取到当前应用程序上下文的beanFactoryPostProcessors变量的值，并且实例化调用执行所有已经注册的beanFactoryPostProcessor
-		// 默认情况下，通过getBeanFactoryPostProcessors()来获取已经注册的BFPP，但是默认是空的，那么问题来了，如果你想扩展，怎么进行扩展工作？
+		// 默认情况下，通过getBeanFactoryPostProcessors()来获取已经注册的BFPP，但是默认是空的
 		PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, getBeanFactoryPostProcessors());
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found in the meantime
 		// (e.g. through an @Bean method registered by ConfigurationClassPostProcessor)
+		// Aop 相关
+		// 如果当前 beanFactory 包含 loadTimeWeaver，则在此将对应的 processor 进行添加
 		if (!NativeDetector.inNativeImage() && beanFactory.getTempClassLoader() == null &&
 				beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
 			beanFactory.addBeanPostProcessor(new LoadTimeWeaverAwareProcessor(beanFactory));
