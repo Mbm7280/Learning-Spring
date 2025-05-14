@@ -582,9 +582,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				// 调用各种beanFactory处理器即bfpp
 				// bfpp BeanFactoryPostProcessor	bpp BeanPostProcessor 	 两者都属于后置处理器
 				// bfpp 用于 BeanDefinition，即一个 Bean 的配置信息已经被加载但是还没有实例化，此时会通过bfpp进行一些处理
-				// bpp 用于 Bean,即一个 Bean 已经实例化，此时会通过bff进行一些处理
+				// bpp 用于 Bean,即一个 Bean 已经实例化时，此时会通过bff进行一些处理
 				invokeBeanFactoryPostProcessors(beanFactory);
-				// 注册bean处理器，这里只是注册功能，真正调用的是getBean方法
+				// 注册bean处理器：实际做的处理为：在BeanDefinitions中寻找BeanPostProcessor，然后将其保存在一个集合中。此外在添加bpp时依旧存在优先级的概念
 				registerBeanPostProcessors(beanFactory);
 				beanPostProcess.end();
 
@@ -815,6 +815,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * <p>Must be called before any instantiation of application beans.
 	 */
 	protected void registerBeanPostProcessors(ConfigurableListableBeanFactory beanFactory) {
+		// 调用 注册bpp重载方法
 		PostProcessorRegistrationDelegate.registerBeanPostProcessors(beanFactory, this);
 	}
 
